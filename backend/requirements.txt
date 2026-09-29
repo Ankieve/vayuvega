@@ -1,0 +1,10 @@
+# Install with:  pip install -r backend/requirements.txt
+# (torch CPU build is enough; no GPU needed)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+timm
+pandas
+numpy
+pillow
+requests   # used by backend/satellite/ to fetch near-real-time satellite imagery

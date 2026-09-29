@@ -1,0 +1,27 @@
+# Secrets - never commit
+.env
+
+# Active models for prediction (REQUIRED for Render deployment to make accurate predictions)
+!backend/model_v3b.pth
+!backend/model_v4_seed1.pth
+!backend/model_v2_backup.pth
+# Legacy single model placeholder (not used by v3 ensemble)
+backend/model.pth
+
+# Satellite pipeline's own downloaded/generated data - regenerated at runtime
+backend/data/satellite/raw/
+backend/data/satellite/processed/
+backend/data/satellite/latest/
+backend/data/satellite/metadata/
+backend/satellite/test_output_full_disk.png
+backend/satellite/test_output_crop.png
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Editor/OS
+.DS_Store
+Thumbs.db

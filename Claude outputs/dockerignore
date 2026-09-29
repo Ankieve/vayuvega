@@ -1,0 +1,6 @@
+.git
+__pycache__/
+*.pyc
+_original_frontend_backup/
+*.zip
+.vscode/

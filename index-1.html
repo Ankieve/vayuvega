@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>PRISM-TC | Tropical Cyclone Intelligence</title>
+
+    <link rel="icon" href="data:,">
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- Google Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    />
+
+    <!-- Our CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+        <div class="brand-icon">🌪️</div>
+
+        <div>
+            <h1>PRISM-TC</h1>
+            <span>AI CYCLONE INTELLIGENCE</span>
+        </div>
+    </div>
+
+    <nav>
+
+        <a href="#dashboard" class="nav-item active">
+            <span>📊</span>
+            Dashboard
+        </a>
+
+        <a href="#forecast" class="nav-item">
+            <span>🌀</span>
+            Forecast
+        </a>
+
+        <a href="#environment" class="nav-item">
+            <span>🌡️</span>
+            Input
+        </a>
+
+        <a href="#system" class="nav-item">
+            <span>⚙️</span>
+            System
+        </a>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <div class="system-status">
+            <span id="statusDot" class="status-dot pending"></span>
+
+            <div>
+                <strong id="sysTitle">Connecting...</strong>
+                <small id="sysSub">Checking AI services</small>
+            </div>
+        </div>
+
+        <div class="version">
+            SIH26070 • VAYUVEGA
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- ================= MAIN ================= -->
+
+<main class="main">
+
+    <!-- TOP BAR -->
+
+    <header class="topbar">
+
+        <div>
+            <h2>🌊 Tropical Cyclone Forecasting</h2>
+
+            <p>
+                Satellite-image intensity classification with a simulated track and risk outlook
+            </p>
+        </div>
+
+        <div class="top-actions">
+
+            <button
+                id="healthBtn"
+                class="secondary-btn">
+                Check AI Status
+            </button>
+
+            <button
+                id="demoBtn"
+                class="primary-btn">
+                ▶ Run Demo
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================= STATUS ================= -->
+
+    <section class="status-strip">
+
+        <div class="status-box">
+
+            <span class="status-label">
+                AI ENGINE
+            </span>
+
+            <strong id="aiStatus">
+                Checking...
+            </strong>
+
+        </div>
+
+
+        <div class="status-box">
+
+            <span class="status-label">
+                MODEL
+            </span>
+
+            <strong>
+                EfficientNet-B0 classifier
+            </strong>
+
+        </div>
+
+
+        <div class="status-box">
+
+            <span class="status-label">
+                DATA IN USE
+            </span>
+
+            <strong>
+                TCIR satellite + IBTrACS tracks
+            </strong>
+
+        </div>
+
+
+        <div class="status-box">
+
+            <span class="status-label">
+                MODE
+            </span>
+
+            <strong id="modeStatus">
+                Ready
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= NOTICE ================= -->
+
+    <section class="notice">
+
+        <span class="tag real">MODEL</span>
+        <span>
+            Intensity class, confidence and class probabilities come from the trained model
+            (about 60% accuracy on 372 unseen test images).
+        </span>
+
+        <span class="tag sim">SIMULATED</span>
+        <span>
+            Track, wind outlook, pressure, risk index and rapid-intensification flag are
+            prototype estimates (historical-analog and rule-based), not model output.
+        </span>
+
+    </section>
+
+
+    <!-- ================= DASHBOARD ================= -->
+
+    <section id="dashboard" class="dashboard-grid">
+
+
+        <!-- LEFT COLUMN -->
+
+        <div class="left-column">
+
+
+            <!-- MAP -->
+
+            <div class="card map-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Cyclone Track Visualization
+                        </h3>
+
+                        <p>
+                            Observed past track and simulated 24-hour outlook
+                        </p>
+
+                    </div>
+
+                    <span
+                        id="riskBadge"
+                        class="badge neutral">
+                        WAITING
+                    </span>
+
+                </div>
+
+                <div id="map"></div>
+
+                <div class="legend">
+                    <span><i class="swatch past"></i> Observed (IBTrACS)</span>
+                    <span><i class="swatch sim"></i> Simulated outlook</span>
+                    <span><i class="swatch now"></i> Current position</span>
+                </div>
+
+            </div>
+
+
+            <!-- WIND CHART -->
+
+            <div
+                id="forecast"
+                class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Intensity Outlook
+                        </h3>
+
+                        <p>
+                            Simulated maximum sustained wind, next 24 hours
+                        </p>
+
+                    </div>
+
+                    <span class="tag sim">SIMULATED</span>
+
+                </div>
+
+                <div class="chart-wrap">
+                    <canvas id="windChart"></canvas>
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- RIGHT COLUMN -->
+
+        <div class="right-column">
+
+
+            <!-- PREDICTION -->
+
+            <div class="card prediction-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            AI Prediction
+                        </h3>
+
+                        <p>
+                            Current cyclone assessment
+                        </p>
+
+                    </div>
+
+                    <div class="ai-icon">
+                        🤖
+                    </div>
+
+                </div>
+
+
+                <div class="prediction-main">
+
+                    <span>
+                        Predicted Category
+                        <em id="tagCategory" class="tag hidden">MODEL</em>
+                    </span>
+
+                    <strong id="category">
+                        —
+                    </strong>
+
+                    <small id="provenance" class="provenance">
+                        Choose an image below, or press Run Demo.
+                    </small>
+
+                </div>
+
+
+                <div class="prediction-grid">
+
+                    <div class="metric">
+
+                        <span>
+                            Wind <em id="tagWind" class="tag hidden">EST.</em>
+                        </span>
+
+                        <strong id="wind">
+                            —
+                        </strong>
+
+                        <small id="windUnit">
+                            knots
+                        </small>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>
+                            Pressure <em id="tagPressure" class="tag hidden">SIM</em>
+                        </span>
+
+                        <strong id="pressure">
+                            —
+                        </strong>
+
+                        <small>
+                            hPa
+                        </small>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>
+                            Risk Index <em id="tagRisk" class="tag hidden">SIM</em>
+                        </span>
+
+                        <strong id="risk">
+                            —
+                        </strong>
+
+                        <small>
+                            /100
+                        </small>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>
+                            Confidence <em id="tagConf" class="tag hidden">MODEL</em>
+                        </span>
+
+                        <strong id="confidence">
+                            —
+                        </strong>
+
+                        <small>
+                            %
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div class="prob-block">
+
+                    <span class="prob-title">
+                        Class probabilities
+                        <em class="tag real">MODEL</em>
+                    </span>
+
+                    <div id="probBars" class="prob-bars">
+                        <p class="hint">Probabilities appear after an image prediction.</p>
+                    </div>
+
+                    <p class="hint">
+                        Confidence is the model's own certainty. It can be too high, so it is
+                        not the true chance of being correct.
+                    </p>
+
+                </div>
+
+
+                <div
+                    id="rapidBox"
+                    class="rapid-box">
+
+                    <span>⚠️</span>
+
+                    <div>
+
+                        <strong>
+                            Rapid Intensification
+                            <em class="tag sim">SIMULATED</em>
+                        </strong>
+
+                        <p id="rapidText">
+                            Awaiting prediction
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- INPUT -->
+
+            <div
+                id="environment"
+                class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Satellite Image and Position
+                        </h3>
+
+                        <p>
+                            Add an image for an AI prediction
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="upload-block">
+
+                    <label class="upload-btn" for="imageInput">
+                        📤 Upload satellite image
+                    </label>
+
+                    <input
+                        id="imageInput"
+                        type="file"
+                        accept="image/png,image/jpeg">
+
+                    <select id="sampleSelect" aria-label="Sample image">
+                        <option value="">or choose a sample image...</option>
+                    </select>
+
+                    <div id="previewBox" class="preview-box hidden">
+
+                        <img id="preview" alt="Selected satellite image">
+
+                        <div>
+                            <strong id="previewName">—</strong>
+                            <small id="previewInfo"></small>
+                            <button id="clearImage" type="button" class="link-btn">
+                                Remove image
+                            </button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Latitude
+                        </label>
+
+                        <input
+                            id="latitude"
+                            type="number"
+                            step="0.01"
+                            value="15.50">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Longitude
+                        </label>
+
+                        <input
+                            id="longitude"
+                            type="number"
+                            step="0.01"
+                            value="85.00">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Wind (kt) <small>used only when no image</small>
+                        </label>
+
+                        <input
+                            id="windInput"
+                            type="number"
+                            step="1"
+                            value="75">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Pressure (hPa) <small>used only when no image</small>
+                        </label>
+
+                        <input
+                            id="pressureInput"
+                            type="number"
+                            step="1"
+                            value="980">
+
+                    </div>
+
+
+                    <div class="input-group muted-input">
+
+                        <label>
+                            SST (°C) <small>future ERA5</small>
+                        </label>
+
+                        <input
+                            id="sst"
+                            type="number"
+                            step="0.1"
+                            value="29.5">
+
+                    </div>
+
+
+                    <div class="input-group muted-input">
+
+                        <label>
+                            Wind Shear (kt) <small>future ERA5</small>
+                        </label>
+
+                        <input
+                            id="shear"
+                            type="number"
+                            step="0.1"
+                            value="10">
+
+                    </div>
+
+
+                    <div class="input-group muted-input">
+
+                        <label>
+                            Humidity (%) <small>future ERA5</small>
+                        </label>
+
+                        <input
+                            id="humidity"
+                            type="number"
+                            step="1"
+                            value="75">
+
+                    </div>
+
+
+                    <div class="input-group muted-input">
+
+                        <label>
+                            Vorticity <small>future ERA5</small>
+                        </label>
+
+                        <input
+                            id="vorticity"
+                            type="number"
+                            step="0.00001"
+                            value="0.0001">
+
+                    </div>
+
+                </div>
+
+
+                <p class="form-note">
+                    The current model reads the satellite image only. SST, wind shear,
+                    humidity and vorticity are kept for the planned ERA5 extension and do
+                    not change the result yet.
+                </p>
+
+
+                <button
+                    id="predictBtn"
+                    class="predict-btn">
+
+                    🔮 Generate AI Prediction
+
+                </button>
+
+            </div>
+
+
+            <!-- DATA SOURCES -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Multi-Source Data
+                        </h3>
+
+                        <p>
+                            PRISM-TC data architecture
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="source-list">
+
+                    <div class="source">
+
+                        <div class="source-icon">
+                            🛰️
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                TCIR
+                            </strong>
+
+                            <span>
+                                Infrared satellite images (training and input)
+                            </span>
+
+                        </div>
+
+                        <b>
+                            IN USE
+                        </b>
+
+                    </div>
+
+
+                    <div class="source">
+
+                        <div class="source-icon">
+                            📈
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                IBTrACS
+                            </strong>
+
+                            <span>
+                                Intensity labels and historical tracks
+                            </span>
+
+                        </div>
+
+                        <b>
+                            IN USE
+                        </b>
+
+                    </div>
+
+
+                    <div class="source">
+
+                        <div class="source-icon">
+                            🌎
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                ERA5
+                            </strong>
+
+                            <span>
+                                Atmospheric reanalysis (not connected yet)
+                            </span>
+
+                        </div>
+
+                        <b class="plan">
+                            PLANNED
+                        </b>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= LIVE SATELLITE ================= -->
+
+    <section id="liveSatellite" class="card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h3>
+                    Live / Near-Real-Time Satellite
+                    <em id="satBadge" class="badge neutral">NO DATA</em>
+                </h3>
+
+                <p>
+                    Newest freely-available regional view - not a video feed
+                </p>
+
+            </div>
+
+            <button id="satRefreshBtn" type="button" class="link-btn">
+                Refresh now
+            </button>
+
+        </div>
+
+        <div class="sat-body">
+
+            <div class="sat-image-wrap">
+                <img id="satImage" alt="Latest near-real-time satellite crop, North Indian Ocean" class="hidden">
+                <div id="satPlaceholder" class="sat-placeholder">
+                    No satellite image captured yet.
+                </div>
+            </div>
+
+            <div class="sat-meta">
+
+                <div>
+                    <span>Source</span>
+                    <strong id="satSource">—</strong>
+                </div>
+
+                <div>
+                    <span>Satellite</span>
+                    <strong id="satSatellite">—</strong>
+                </div>
+
+                <div>
+                    <span>Product</span>
+                    <strong id="satProduct">—</strong>
+                </div>
+
+                <div>
+                    <span>Observation time (UTC)</span>
+                    <strong id="satObsTime">—</strong>
+                </div>
+
+                <div>
+                    <span>Data age</span>
+                    <strong id="satAge">—</strong>
+                </div>
+
+                <div>
+                    <span>Region coverage</span>
+                    <strong id="satCoverage">—</strong>
+                </div>
+
+                <div>
+                    <span>Last check</span>
+                    <strong id="satLastCheck">—</strong>
+                </div>
+
+                <div>
+                    <span>Last successful update</span>
+                    <strong id="satLastSuccess">—</strong>
+                </div>
+
+            </div>
+
+        </div>
+
+        <p id="satErrorBox" class="sat-error hidden"></p>
+
+        <p class="sat-disclaimer">
+            This is the newest picture we could fetch for free from a public satellite
+            mirror, cropped to the North Indian Ocean - it is near-real-time, not live
+            video, and typically 15-40 minutes old. Only the intensity prediction elsewhere
+            on this page (made from an image you choose) is validated AI output. Anything
+            computed automatically from this live image would be marked EXPERIMENTAL and is
+            not scientifically validated the same way.
+        </p>
+
+    </section>
+
+
+    <!-- ================= SYSTEM ================= -->
+
+    <section id="system" class="card system-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h3>
+                    System Information
+                </h3>
+
+                <p>
+                    How this prototype works today
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="architecture">
+
+            <div>
+                🛰️
+                <strong>
+                    Satellite image
+                </strong>
+                <span>
+                    TCIR infrared
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                🧠
+                <strong>
+                    EfficientNet-B0
+                </strong>
+                <span>
+                    Real model
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                🌀
+                <strong>
+                    Intensity class
+                </strong>
+                <span>
+                    5 IMD categories
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                🧭
+                <strong>
+                    Analog outlook
+                </strong>
+                <span>
+                    Simulated (IBTrACS)
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                ⚠️
+                <strong>
+                    Risk
+                </strong>
+                <span>
+                    Rule-based
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <footer>
+
+        PRISM-TC • SIH26070 • Disaster Management
+
+        <span>
+            Prototype for Smart India Hackathon 2026 · Not for operational warnings
+        </span>
+
+    </footer>
+
+</main>
+
+<div id="toast" class="toast hidden" role="alert"></div>
+
+<!-- Leaflet -->
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+<!-- Chart.js -->
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js">
+</script>
+
+<!-- Application JS -->
+<script src="app.js"></script>
+
+</body>
+</html>

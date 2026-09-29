@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>PRISM-TC | Tropical Cyclone Intelligence</title>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+
+    <!-- Google Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    />
+
+    <!-- Our CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ================= SIDEBAR ================= -->
+
+<aside class="sidebar">
+
+    <div class="brand">
+        <div class="brand-icon">🌪️</div>
+
+        <div>
+            <h1>PRISM-TC</h1>
+            <span>AI CYCLONE INTELLIGENCE</span>
+        </div>
+    </div>
+
+    <nav>
+
+        <a href="#dashboard" class="nav-item active">
+            <span>📊</span>
+            Dashboard
+        </a>
+
+        <a href="#forecast" class="nav-item">
+            <span>🌀</span>
+            Forecast
+        </a>
+
+        <a href="#environment" class="nav-item">
+            <span>🌡️</span>
+            Environment
+        </a>
+
+        <a href="#system" class="nav-item">
+            <span>⚙️</span>
+            System
+        </a>
+
+    </nav>
+
+    <div class="sidebar-bottom">
+
+        <div class="system-status">
+            <span class="status-dot"></span>
+
+            <div>
+                <strong>System Online</strong>
+                <small>AI services available</small>
+            </div>
+        </div>
+
+        <div class="version">
+            SIH26070 • VAYUVEGA
+        </div>
+
+    </div>
+
+</aside>
+
+
+<!-- ================= MAIN ================= -->
+
+<main class="main">
+
+    <!-- TOP BAR -->
+
+    <header class="topbar">
+
+        <div>
+            <h2>🌊 Tropical Cyclone Forecasting</h2>
+
+            <p>
+                Multi-modal AI forecasting and risk visualization
+            </p>
+        </div>
+
+        <div class="top-actions">
+
+            <button
+                id="healthBtn"
+                class="secondary-btn">
+                Check AI Status
+            </button>
+
+            <button
+                id="demoBtn"
+                class="primary-btn">
+                ▶ Run Demo
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <!-- ================= STATUS ================= -->
+
+    <section class="status-strip">
+
+        <div class="status-box">
+
+            <span class="status-label">
+                AI ENGINE
+            </span>
+
+            <strong id="aiStatus">
+                Checking...
+            </strong>
+
+        </div>
+
+
+        <div class="status-box">
+
+            <span class="status-label">
+                MODEL
+            </span>
+
+            <strong>
+                CNN + GRU
+            </strong>
+
+        </div>
+
+
+        <div class="status-box">
+
+            <span class="status-label">
+                DATA FUSION
+            </span>
+
+            <strong>
+                Satellite + ERA5 + IBTrACS
+            </strong>
+
+        </div>
+
+
+        <div class="status-box">
+
+            <span class="status-label">
+                MODE
+            </span>
+
+            <strong id="modeStatus">
+                Demo
+            </strong>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= DASHBOARD ================= -->
+
+    <section id="dashboard" class="dashboard-grid">
+
+
+        <!-- LEFT COLUMN -->
+
+        <div class="left-column">
+
+
+            <!-- MAP -->
+
+            <div class="card map-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Cyclone Track Visualization
+                        </h3>
+
+                        <p>
+                            AI-predicted cyclone movement
+                        </p>
+
+                    </div>
+
+                    <span
+                        id="riskBadge"
+                        class="badge neutral">
+                        WAITING
+                    </span>
+
+                </div>
+
+                <div id="map"></div>
+
+            </div>
+
+
+            <!-- WIND CHART -->
+
+            <div
+                id="forecast"
+                class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Intensity Forecast
+                        </h3>
+
+                        <p>
+                            Predicted maximum sustained wind
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <canvas id="windChart"></canvas>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- RIGHT COLUMN -->
+
+        <div class="right-column">
+
+
+            <!-- PREDICTION -->
+
+            <div class="card prediction-card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            AI Prediction
+                        </h3>
+
+                        <p>
+                            Current cyclone assessment
+                        </p>
+
+                    </div>
+
+                    <div class="ai-icon">
+                        🤖
+                    </div>
+
+                </div>
+
+
+                <div class="prediction-main">
+
+                    <span>
+                        Predicted Category
+                    </span>
+
+                    <strong id="category">
+                        —
+                    </strong>
+
+                </div>
+
+
+                <div class="prediction-grid">
+
+                    <div class="metric">
+
+                        <span>
+                            Wind
+                        </span>
+
+                        <strong id="wind">
+                            —
+                        </strong>
+
+                        <small>
+                            knots
+                        </small>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>
+                            Pressure
+                        </span>
+
+                        <strong id="pressure">
+                            —
+                        </strong>
+
+                        <small>
+                            hPa
+                        </small>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>
+                            Risk Index
+                        </span>
+
+                        <strong id="risk">
+                            —
+                        </strong>
+
+                        <small>
+                            /100
+                        </small>
+
+                    </div>
+
+
+                    <div class="metric">
+
+                        <span>
+                            Confidence
+                        </span>
+
+                        <strong id="confidence">
+                            —
+                        </strong>
+
+                        <small>
+                            %
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="rapidBox"
+                    class="rapid-box">
+
+                    <span>⚠️</span>
+
+                    <div>
+
+                        <strong>
+                            Rapid Intensification
+                        </strong>
+
+                        <p id="rapidText">
+                            Awaiting prediction
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ENVIRONMENT -->
+
+            <div
+                id="environment"
+                class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Environmental Conditions
+                        </h3>
+
+                        <p>
+                            Atmospheric parameters
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-grid">
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Latitude
+                        </label>
+
+                        <input
+                            id="latitude"
+                            type="number"
+                            step="0.01"
+                            value="15.50">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Longitude
+                        </label>
+
+                        <input
+                            id="longitude"
+                            type="number"
+                            step="0.01"
+                            value="85.00">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            SST (°C)
+                        </label>
+
+                        <input
+                            id="sst"
+                            type="number"
+                            step="0.1"
+                            value="29.5">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Wind Shear (kt)
+                        </label>
+
+                        <input
+                            id="shear"
+                            type="number"
+                            step="0.1"
+                            value="10">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Pressure (hPa)
+                        </label>
+
+                        <input
+                            id="pressureInput"
+                            type="number"
+                            step="1"
+                            value="980">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Wind (kt)
+                        </label>
+
+                        <input
+                            id="windInput"
+                            type="number"
+                            step="1"
+                            value="75">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Humidity (%)
+                        </label>
+
+                        <input
+                            id="humidity"
+                            type="number"
+                            step="1"
+                            value="75">
+
+                    </div>
+
+
+                    <div class="input-group">
+
+                        <label>
+                            Vorticity
+                        </label>
+
+                        <input
+                            id="vorticity"
+                            type="number"
+                            step="0.00001"
+                            value="0.0001">
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    id="predictBtn"
+                    class="predict-btn">
+
+                    🔮 Generate AI Prediction
+
+                </button>
+
+            </div>
+
+
+            <!-- DATA SOURCES -->
+
+            <div class="card">
+
+                <div class="card-header">
+
+                    <div>
+
+                        <h3>
+                            Multi-Source Data
+                        </h3>
+
+                        <p>
+                            PRISM-TC data architecture
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="source-list">
+
+                    <div class="source">
+
+                        <div class="source-icon">
+                            🛰️
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                INSAT
+                            </strong>
+
+                            <span>
+                                Satellite imagery
+                            </span>
+
+                        </div>
+
+                        <b>
+                            READY
+                        </b>
+
+                    </div>
+
+
+                    <div class="source">
+
+                        <div class="source-icon">
+                            🌎
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                ERA5
+                            </strong>
+
+                            <span>
+                                Atmospheric reanalysis
+                            </span>
+
+                        </div>
+
+                        <b>
+                            READY
+                        </b>
+
+                    </div>
+
+
+                    <div class="source">
+
+                        <div class="source-icon">
+                            📈
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                IBTrACS
+                            </strong>
+
+                            <span>
+                                Historical cyclone tracks
+                            </span>
+
+                        </div>
+
+                        <b>
+                            READY
+                        </b>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= SYSTEM ================= -->
+
+    <section id="system" class="card system-card">
+
+        <div class="card-header">
+
+            <div>
+
+                <h3>
+                    System Information
+                </h3>
+
+                <p>
+                    PRISM-TC prototype architecture
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="architecture">
+
+            <div>
+                🛰️
+                <strong>
+                    INSAT
+                </strong>
+                <span>
+                    Spatial features
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                🌎
+                <strong>
+                    ERA5
+                </strong>
+                <span>
+                    Environment
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                🧠
+                <strong>
+                    CNN
+                </strong>
+                <span>
+                    Spatial encoder
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                🔄
+                <strong>
+                    GRU
+                </strong>
+                <span>
+                    Temporal fusion
+                </span>
+            </div>
+
+            <div class="arrow">
+                →
+            </div>
+
+            <div>
+                ⚠️
+                <strong>
+                    Risk
+                </strong>
+                <span>
+                    Forecast
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <footer>
+
+        PRISM-TC • SIH26070 • Disaster Management
+
+        <span>
+            Prototype for Smart India Hackathon 2026
+        </span>
+
+    </footer>
+
+</main>
+
+
+<!-- Leaflet -->
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+<!-- Chart.js -->
+<script
+    src="https://cdn.jsdelivr.net/npm/chart.js">
+</script>
+
+<!-- Application JS -->
+<script src="app.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,14 @@
+.git
+.gitignore
+__pycache__
+*.pyc
+.venv
+venv
+.DS_Store
+Thumbs.db
+backend/data/satellite/raw/
+backend/data/satellite/processed/
+backend/data/satellite/latest/
+backend/data/satellite/metadata/
+backend/satellite/test_output_full_disk.png
+backend/satellite/test_output_crop.png

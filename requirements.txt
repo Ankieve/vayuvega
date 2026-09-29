@@ -1,0 +1,10 @@
+# Root requirements for Render deployment
+# Uses PyTorch CPU wheel to keep memory footprint under Render's limits
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+timm
+pandas
+numpy
+pillow
+requests
