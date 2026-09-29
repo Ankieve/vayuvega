@@ -202,6 +202,14 @@ model.pth + torch on your own machine, never run in the sandbox that wrote this 
   neither extreme alone) now escalate together to `likely_ood`, since that combination is itself
   evidence against a real TCIR chip even when no single measurement crosses the strong threshold.
   All 10 bundled TCIR samples were re-verified against both changes with zero false rejections.
+   Colorfulness thresholds were likewise tightened later (soft 6.0 -> 2.0, strong
+   15.0 -> 6.0) after phone selfies came back as confident cyclone categories:
+   every TCIR sample (including JPEG re-saves at q30-q90) measures colorfulness
+   exactly 0.00, while photo proxies measure 20-60 full-color and 4.5-11
+   desaturated - so real color content is now rejected with wide safety margin
+   for legitimate grayscale inputs. Disclosed residual hole: a fully
+   desaturated/grayscale photo is indistinguishable from an IR chip by these
+   three statistics and will still be classified.
   This is still a 3-feature heuristic, not a trained detector - it will keep missing OOD inputs
   that happen to match TCIR's brightness/contrast/color profile by coincidence.
 - **SST / wind-shear / humidity rule-based environment check** - `logic.environment_favors_intensification()`.

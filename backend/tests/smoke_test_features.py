@@ -118,6 +118,25 @@ check("bright low-color document image is rejected outright (not just warned)",
 check("document rejection reason cites brightness", "brightness" in str(d.get("ood", {}).get("reasons", [])).lower(),
       str(d.get("ood")))
 
+# A colorful phone-photo proxy (smooth skin-tone-like gradients + sensor
+# noise, colorfulness ~45 vs 0.00 for every real TCIR sample) must be rejected
+# outright: previously the STRONG colorfulness threshold (15.0) let filtered /
+# desaturated selfies through with a mere warning and they came back as
+# confident cyclone categories (real user report). See ood_guard.py.
+import numpy as _np2
+_xx, _yy = _np2.meshgrid(_np2.linspace(0, 1, 201), _np2.linspace(0, 1, 201))
+_photo = _np2.stack([180 + 40 * _xx, 140 + 30 * _yy, 120 + 25 * (1 - _xx)], -1)
+_photo = _np2.clip(_photo + _np2.random.RandomState(7).normal(0, 6, (201, 201, 3)), 0, 255).astype(_np2.uint8)
+_photo_buf = _io.BytesIO()
+Image.fromarray(_photo).save(_photo_buf, format="PNG")
+_photo_uri = "data:image/png;base64," + base64.b64encode(_photo_buf.getvalue()).decode()
+s, b, _ = call("/api/predict", {"latitude": 12, "longitude": 88, "image": _photo_uri})
+d = json.loads(b)
+check("colorful phone photo is rejected outright, not classified",
+      s == 200 and d.get("rejected") is True, str(d)[:300])
+check("photo rejection reason cites color content",
+      "color" in str(d.get("ood", {}).get("reasons", [])).lower(), str(d.get("ood")))
+
 # Compound-signal case: two independently-borderline (but not individually
 # extreme) measurements should together escalate to likely_ood even though
 # neither alone would cross the strong threshold.

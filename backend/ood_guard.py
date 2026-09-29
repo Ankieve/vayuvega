@@ -52,8 +52,21 @@ _FALLBACK_STD_RANGE = (39.0, 68.9)
 # for genuinely borderline images. See CLAUDE.md's OOD guard section.
 _SOFT_PAD = 25.0
 _STRONG_PAD = 35.0
-_COLORFULNESS_SOFT = 6.0
-_COLORFULNESS_STRONG = 15.0
+# Colorfulness thresholds were originally SOFT 6.0 / STRONG 15.0, tightened
+# to 2.0 / 6.0 after a real user report: phone selfies uploaded to /api/predict
+# came back as confident cyclone categories instead of being rejected. Measured
+# evidence: all 10 TCIR samples (and re-saves of them as JPEG q30-q90) have
+# colorfulness exactly 0.00 - true single-channel IR replicated into RGB - so
+# any real color content is foreign to the training distribution. Synthetic
+# photo proxies measured colorfulness 20-60 (full color), 11 at quarter
+# saturation, 4.5 at 10% saturation: the old STRONG=15 let filtered/desaturated
+# photos through with a mere warning. 6.0 rejects those while keeping every
+# legitimate grayscale input (color 0.00) at "none" with wide margin. Residual
+# hole, disclosed: a fully desaturated/grayscale photo (color ~0) is
+# indistinguishable from an IR chip by these three statistics and will still
+# be classified - fixing that needs a trained detector, not this heuristic.
+_COLORFULNESS_SOFT = 2.0
+_COLORFULNESS_STRONG = 6.0
 
 # If two or more signals are each only "warning"-level on their own, that
 # combination is treated as strong evidence together (a document that is a
