@@ -136,6 +136,34 @@ def ensure_dirs() -> None:
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
+def _ensure_rc_from_env() -> None:
+    """Render-friendly credentials: materialize ~/.cdsapirc from the
+    CDSAPI_URL / CDSAPI_KEY env vars when that file doesn't already exist.
+
+    cdsapi itself only reads the file (older 0.x releases ignore env vars
+    entirely), and on Render there is no persistent home to paste one into -
+    so without this, setting the env vars in the dashboard would still fail
+    with "Missing/incomplete configuration file". An existing ~/.cdsapirc
+    (local dev) is never overwritten; env vars only fill the gap.
+    Called lazily from fetch_environment, never from status()."""
+    url = os.environ.get("CDSAPI_URL", "").strip()
+    key = os.environ.get("CDSAPI_KEY", "").strip()
+    if not (url and key):
+        return
+    rc = Path.home() / ".cdsapirc"
+    if rc.is_file():
+        return
+    try:
+        rc.write_text(f"url: {url}\nkey: {key}\n")
+        try:
+            os.chmod(rc, 0o600)
+        except OSError:
+            pass
+        log.info("Wrote %s from CDSAPI_URL/CDSAPI_KEY env vars.", rc)
+    except OSError as exc:
+        log.warning("Could not write %s: %s", rc, exc)
+
+
 # -------------------------------------------------------- optional imports --
 IMPORT_ERROR = None
 try:
@@ -340,6 +368,7 @@ def fetch_environment(lat: float, lon: float, when_utc: datetime | None = None,
             return cached
 
     try:
+        _ensure_rc_from_env()
         client = cdsapi.Client(quiet=True)
     except Exception as exc:  # noqa: BLE001 - typically: no ~/.cdsapirc
         raise ERA5NotConfigured(
