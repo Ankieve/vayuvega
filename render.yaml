@@ -12,5 +12,35 @@ services:
         value: 3.11.9
       - key: HOST
         value: 0.0.0.0
+      # 4-rotation test-time averaging is part of the measured accuracy
+      # (53.7% exact / 93.1% within-one-class). Do NOT lower this to "speed
+      # up" Render - live accuracy would silently drift from the numbers the
+      # dashboard and model card claim. See backend/predict.py.
       - key: TTA_ROTATIONS
         value: "4"
+      # --- Near-real-time satellite (IMD INSAT-3D/3DS, free, no account) ---
+      - key: SATELLITE_ENABLED
+        value: "true"
+      - key: SATELLITE_SOURCE
+        value: imd_insat
+      - key: UPDATE_INTERVAL
+        value: "300"
+      - key: SATELLITE_STALE_AFTER_SECONDS
+        value: "2400"
+      # --- ERA5 reanalysis fetch (real Copernicus data, several-day lag) ---
+      - key: ERA5_ENABLED
+        value: "true"
+      - key: ERA5_LAG_DAYS
+        value: "5"
+      - key: ERA5_REQUEST_TIMEOUT_SECONDS
+        value: "90"
+      # Free Copernicus CDS credentials - fill these in the Render dashboard
+      # (Environment tab), NEVER in this file. Create a free account at
+      # https://cds.climate.copernicus.eu/, accept the ERA5 dataset licence,
+      # then paste your URL + key. Until both are set, GET /api/era5/status
+      # honestly reports ready=false (same as localhost) and /api/predict
+      # keeps working with typed SST/shear values - nothing else is affected.
+      - key: CDSAPI_URL
+        sync: false
+      - key: CDSAPI_KEY
+        sync: false

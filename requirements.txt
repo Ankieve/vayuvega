@@ -1,10 +1,30 @@
-# Root requirements for Render deployment
-# Uses PyTorch CPU wheel to keep memory footprint under Render's limits
+# Root requirements for Render deployment.
+# Pins match the localhost environment exactly (torch 2.14.0+cpu, etc.) so
+# predictions on Render are bit-for-bit the same pipeline as localhost:
+# same weights (backend/model_v3b.pth + model_v4_seed1.pth), same
+# preprocessing, same TTA_ROTATIONS=4 (see backend/predict.py - do not lower
+# it to "speed up" Render or live accuracy will silently drift from the
+# numbers the dashboard/model card claim).
+#
+# IMPORTANT: torch/torchvision are pinned to the +cpu builds. A bare
+# `torch` line lets pip pull the ~2GB CUDA wheel from the main PyPI index,
+# which blows Render's free-tier disk/build and causes failed deploys or
+# 502s. The +cpu pins below force pip to use the PyTorch CPU index.
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch
-torchvision
-timm
-pandas
-numpy
-pillow
-requests
+torch==2.14.0+cpu
+torchvision==0.29.0+cpu
+timm==1.0.30
+pandas==3.0.6
+numpy==2.5.3
+pillow==12.3.0
+requests==2.34.2
+# ERA5 reanalysis fetch (GET /api/era5/fetch). Without these, /api/era5/status
+# permanently reports packages_installed=false and the "Fetch from ERA5"
+# button can never work no matter what keys are set. They are intentionally
+# part of the Render install (not the lean local backend/requirements.txt)
+# so ERA5 is one env-var step away from live. Still needs the operator's own
+# free CDS credentials (CDSAPI_URL + CDSAPI_KEY env vars) - see .env.example
+# and backend/era5.py. Never commit keys to this repo.
+cdsapi>=0.7.7
+xarray
+netCDF4
