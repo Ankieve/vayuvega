@@ -9,7 +9,7 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: PYTHON_VERSION
-        value: 3.11.9
+        value: 3.13.14
       - key: HOST
         value: 0.0.0.0
       # 4-rotation test-time averaging is part of the measured accuracy
