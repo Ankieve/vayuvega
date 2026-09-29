@@ -165,31 +165,46 @@ def _ensure_rc_from_env() -> None:
 
 
 # -------------------------------------------------------- optional imports --
+# Imported LAZILY (see _ensure_optional_imports) instead of at module top:
+# xarray/netCDF4 cost ~50-100MB RAM just by importing, and on a 512MB
+# free-tier host that headroom belongs to the torch ensemble. They load on
+# the first ERA5 status/fetch call instead of at server boot.
+cdsapi = None
+xr = None
 IMPORT_ERROR = None
-try:
-    import cdsapi  # type: ignore
-except Exception as _exc:  # noqa: BLE001
-    cdsapi = None
-    IMPORT_ERROR = f"cdsapi not installed ({type(_exc).__name__}: {_exc})"
+_IMPORTS_ATTEMPTED = False
 
-try:
-    import xarray as xr  # type: ignore
-except Exception as _exc:  # noqa: BLE001
-    xr = None
-    if IMPORT_ERROR is None:
-        IMPORT_ERROR = f"xarray not installed ({type(_exc).__name__}: {_exc})"
+
+def _ensure_optional_imports() -> None:
+    global cdsapi, xr, IMPORT_ERROR, _IMPORTS_ATTEMPTED
+    if _IMPORTS_ATTEMPTED:
+        return
+    _IMPORTS_ATTEMPTED = True
+    try:
+        import cdsapi as _cdsapi  # type: ignore
+        cdsapi = _cdsapi
+    except Exception as _exc:  # noqa: BLE001
+        IMPORT_ERROR = f"cdsapi not installed ({type(_exc).__name__}: {_exc})"
+    try:
+        import xarray as _xr  # type: ignore
+        xr = _xr
+    except Exception as _exc:  # noqa: BLE001
+        if IMPORT_ERROR is None:
+            IMPORT_ERROR = f"xarray not installed ({type(_exc).__name__}: {_exc})"
 
 
 def is_available() -> bool:
     """True only if the optional packages are importable. Does NOT check for
     a valid ~/.cdsapirc - that is only discovered when a request is actually
     attempted, since cdsapi itself is what parses that file."""
+    _ensure_optional_imports()
     return ERA5_ENABLED and cdsapi is not None and xr is not None
 
 
 def status() -> dict:
     """Cheap, side-effect-free status for GET /api/era5/status - never makes
     a network call."""
+    _ensure_optional_imports()
     has_rc = (Path.home() / ".cdsapirc").is_file() or bool(
         os.environ.get("CDSAPI_URL") and os.environ.get("CDSAPI_KEY"))
     return {
