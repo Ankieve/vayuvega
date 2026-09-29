@@ -5,6 +5,8 @@
 !backend/model_v3b.pth
 !backend/model_v4_seed1.pth
 !backend/model_v2_backup.pth
+!backend/model_v3b.onnx
+!backend/model_v4_seed1.onnx
 # Legacy single model placeholder (not used by v3 ensemble)
 backend/model.pth
 

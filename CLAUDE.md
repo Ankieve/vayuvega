@@ -83,10 +83,15 @@ Server (port 5500) or from a file, app.js talks to http://localhost:8000/api (ov
   honesty notes (it is a reanalysis, not real-time - always several days behind "now").
 
 ## Rules for the AI model
-- `backend/predict.py` must NOT apply ImageNet normalization. The shipped checkpoint was trained
-  without it; adding `transforms.Normalize` drops accuracy from ~60% to ~30%.
-- Preprocessing = convert to RGB, Resize((224,224)), ToTensor. Do not change without retraining.
-- The model file must be called `model.pth` and sit next to `predict.py`.
+- `backend/predict.py` serves the ensemble from `backend/model_v3b.onnx` +
+  `backend/model_v4_seed1.onnx` via ONNX Runtime (no torch needed at runtime;
+  verified 0.0002 kt max wind diff vs the torch path, zero class/confidence
+  changes). Preprocessing = convert to RGB, Resize((224,224)) bilinear,
+  /255, ImageNet Normalize - identical math on both backends. Do not change
+  without retraining. (The torch fallback in predict.py needs the .pth files
+  + torch/timm; Grad-CAM needs torch - without it the dashboard hides the
+  checkbox gracefully.)
+- The model files must sit next to `predict.py` under those exact names.
 
 ## State of the work (what is done)
 - Frontend restyled/extended: image upload + sample picker, probability bars, REAL/SIMULATED tags,

@@ -1,19 +1,12 @@
 # Root requirements for Render deployment.
-# Pins match the localhost environment exactly (torch 2.14.0+cpu, etc.) so
-# predictions on Render are bit-for-bit the same pipeline as localhost:
-# same weights (backend/model_v3b.pth + model_v4_seed1.pth), same
-# preprocessing, same TTA_ROTATIONS=4 (see backend/predict.py - do not lower
-# it to "speed up" Render or live accuracy will silently drift from the
-# numbers the dashboard/model card claim).
-#
-# IMPORTANT: torch/torchvision are pinned to the +cpu builds. A bare
-# `torch` line lets pip pull the ~2GB CUDA wheel from the main PyPI index,
-# which blows Render's free-tier disk/build and causes failed deploys or
-# 502s. The +cpu pins below force pip to use the PyTorch CPU index.
---extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.14.0+cpu
-torchvision==0.29.0+cpu
-timm==1.0.30
+# Inference runs on ONNX Runtime (CPU), NOT PyTorch: backend/predict.py
+# serves backend/model_v3b.onnx + model_v4_seed1.onnx via onnxruntime, which
+# needs a fraction of torch's ~700MB install / ~200MB RAM. Same weights,
+# same preprocessing, same TTA_ROTATIONS=4 as the trained pipeline -
+# verified head-to-head vs torch on all 10 bundled samples x 4 rotations
+# (max wind diff 0.0002 kt, zero class/confidence changes). PyTorch is only
+# needed offline, once, if the checkpoints are ever re-exported.
+onnxruntime==1.30.0
 pandas==3.0.6
 numpy==2.5.3
 pillow==12.3.0

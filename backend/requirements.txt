@@ -1,10 +1,9 @@
 # Install with:  pip install -r backend/requirements.txt
-# (torch CPU build is enough; no GPU needed)
---extra-index-url https://download.pytorch.org/whl/cpu
-torch
-torchvision
-timm
-pandas
-numpy
-pillow
+# Inference is torch-free (ONNX Runtime serves backend/*.onnx - see
+# backend/predict.py). Only install torch/timm if you are re-exporting the
+# .onnx files or running backend/gradcam_demo.py (Grad-CAM needs torch).
+onnxruntime==1.30.0
+pandas==3.0.6
+numpy==2.5.3
+pillow==12.3.0
 requests   # used by backend/satellite/ to fetch near-real-time satellite imagery
