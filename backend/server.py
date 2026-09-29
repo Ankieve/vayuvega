@@ -161,6 +161,19 @@ class BadRequest(Exception):
     pass
 
 
+class BusyRequest(Exception):
+    """Raised when a prediction is already running. The free-tier host has
+    512MB RAM - two overlapping ensemble inferences OOM-crashes the whole
+    process (HTTP 502 for everyone), so the second caller gets an immediate
+    HTTP 429 to retry instead of piling on. Does not change results in any
+    way: sequential predictions are numerically identical."""
+
+
+# Only one ensemble inference at a time (see BusyRequest above). Demo and
+# predict share it since both funnel through run_prediction().
+_PREDICT_GUARD = threading.Lock()
+
+
 def number(body, key, default, lo, hi):
     """Read a number from the request with range checking."""
     raw = body.get(key, default)
@@ -220,7 +233,7 @@ def sample_row(filename):
     return rows.iloc[0]
 
 
-def run_prediction(body):
+def _run_prediction_inner(body):
     lat = number(body, "latitude", 15.5, -90, 90)
     lon = number(body, "longitude", 85.0, -180, 360)
     wind_in = number(body, "wind", 75, 0, 250)
@@ -342,6 +355,17 @@ def run_prediction(body):
         mode="rule-based", source="rule", tracks=TRACKS, warnings=warnings,
         extra_meta=extra, sst=sst, wind_shear=wind_shear, humidity=humidity,
         vorticity=vorticity, environment_source=environment_source)
+
+
+def run_prediction(body):
+    if not _PREDICT_GUARD.acquire(blocking=False):
+        raise BusyRequest(
+            "The server is still finishing the previous prediction - "
+            "please wait a few seconds and try again.")
+    try:
+        return _run_prediction_inner(body)
+    finally:
+        _PREDICT_GUARD.release()
 
 
 def run_demo(query):
@@ -467,6 +491,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._static(url.path)
         except BadRequest as exc:
             return self._json(400, {"error": str(exc)})
+        except BusyRequest as exc:
+            return self._json(429, {"error": str(exc), "retryable": True})
         except Exception as exc:  # never crash the server
             self.log_message("ERROR %s: %s", type(exc).__name__, exc)
             return self._json(500, {"error": "Internal server error while processing the request."})
@@ -597,6 +623,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(200, run_prediction(body))
         except BadRequest as exc:
             return self._json(400, {"error": str(exc)})
+        except BusyRequest as exc:
+            return self._json(429, {"error": str(exc), "retryable": True})
         except Exception as exc:
             self.log_message("ERROR %s: %s", type(exc).__name__, exc)
             return self._json(500, {"error": "Internal server error while processing the request."})

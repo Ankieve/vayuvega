@@ -19,7 +19,7 @@ const DEFAULT_API =
 const API_BASE =
     new URLSearchParams(location.search).get("api") || DEFAULT_API;
 
-const API_TIMEOUT_MS = 60000;   /* first model call can be slow */
+const API_TIMEOUT_MS = 95000;   /* cold free-tier inference can take over a minute; stays under Render's ~100s proxy limit */
 
 /* No build step in this project, so these are maintained by hand - bump
    both whenever a notable set of changes ships. Shown in the sidebar
